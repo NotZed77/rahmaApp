@@ -1,0 +1,36 @@
+spring.application.name: api-gateway
+
+jwt:
+  secretKey: ancdabvdgjgj2migpgnpernvperwng3wuognvpawfvwpausuii
+
+eureka.client.service-url.defaultZone: http://localhost:8761/eureka
+
+server:
+  port: 8080
+
+
+spring:
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: user-service
+              uri: lb://USER-SERVICE
+              predicates:
+                - Path=/api/v1/users/**
+              filters:
+                - StripPrefix= 2
+
+            - id: event-service
+              uri: lb://EVENT-SERVICE
+              predicates:
+                - Path=/api/v1/events/**
+              filters:
+                - StripPrefix= 2
+                - name: AuthenticationFilter
+
+eureka:
+  instance:
+    hostname: localhost
+    prefer-ip-address: false
