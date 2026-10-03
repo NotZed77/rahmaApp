@@ -1,4 +1,4 @@
-package com.notzed.rahmaApp.user_service.util;
+package com.notzed.rahmaApp.identity_service.util;
 
 import org.mindrot.jbcrypt.BCrypt;
 

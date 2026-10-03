@@ -1,6 +1,6 @@
-package com.notzed.rahmaApp.user_service.dto;
+package com.notzed.rahmaApp.identity_service.dto;
 
-import com.notzed.rahmaApp.user_service.entity.*;
+import com.notzed.rahmaApp.identity_service.entity.*;
 import lombok.Data;
 
 import java.time.LocalDate;

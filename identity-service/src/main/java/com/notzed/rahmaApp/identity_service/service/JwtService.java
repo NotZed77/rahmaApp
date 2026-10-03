@@ -1,6 +1,6 @@
-package com.notzed.rahmaApp.user_service.service;
+package com.notzed.rahmaApp.identity_service.service;
 
-import com.notzed.rahmaApp.user_service.entity.*;
+import com.notzed.rahmaApp.identity_service.entity.Identity;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -21,20 +21,21 @@ public class JwtService {
         return Keys.hmacShaKeyFor(jwtSecretKey.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateAccessToken(User user){
+    public String generateAccessToken(Identity identity){
         return Jwts.builder()
-                .subject(user.getUserId().toString())
-                .claim("email", user.getEmail())
-                .claim("password", user.getPassword())
+                .subject(identity.getId().toString())
+                .claim("email", identity.getEmail())
+                .claim("role", identity.getRole().toString())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + 1000*60*10))
                 .signWith(getSecretKey())
                 .compact();
     }
 
-    public String generateRefreshToken(User user){
+    public String generateRefreshToken(Identity identity){
         return Jwts.builder()
-                .subject(user.getUserId().toString())
+                .subject(identity.getId().toString())
+                .subject(identity.getRole().toString())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + 1000L * 60*60*24*30*6))
                 .signWith(getSecretKey())
@@ -49,4 +50,5 @@ public class JwtService {
                 .getPayload();
         return Long.valueOf(claims.getSubject());
     }
+
 }

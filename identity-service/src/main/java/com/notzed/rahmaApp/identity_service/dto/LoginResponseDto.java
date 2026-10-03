@@ -1,4 +1,4 @@
-package com.notzed.rahmaApp.user_service.dto;
+package com.notzed.rahmaApp.identity_service.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -8,5 +8,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LoginResponseDto {
+    private Long identityId;
     private String accessToken;
 }

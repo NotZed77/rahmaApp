@@ -5,11 +5,8 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.util.Date;
-import java.util.List;
 
 @Service
 public class JwtService {
@@ -30,12 +27,12 @@ public class JwtService {
         return claims.getSubject();
     }
 
-    public List<String> generateRefreshToken(String token){
+    public String getRoleFromToken(String token) {
         Claims claims = Jwts.parser()
                 .verifyWith(getSecretKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-        return claims.get("roles", List.class);
+        return claims.get("role", String.class);
     }
 }

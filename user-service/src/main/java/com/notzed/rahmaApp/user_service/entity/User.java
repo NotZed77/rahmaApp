@@ -19,7 +19,8 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
 
-    @NonNull
+    private Long identityId;
+
     @Column(name = "userName")
     private String name;
 
@@ -27,18 +28,11 @@ public class User {
     private String email;
 
     @Column(nullable = false)
-    private String password;
-
-    @Column(nullable = false)
     private LocalDate dateOfBirth;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Gender gender;
-
-    @ElementCollection(fetch = FetchType.EAGER)
-    @Enumerated(EnumType.STRING)
-    private Set<UserRole> userRoles;
 
 
     @Override

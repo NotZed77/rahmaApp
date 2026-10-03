@@ -1,4 +1,4 @@
-package com.notzed.rahmaApp.user_service.dto;
+package com.notzed.rahmaApp.identity_service.dto;
 
 import lombok.Data;
 
