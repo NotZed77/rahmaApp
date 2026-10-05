@@ -1,12 +1,9 @@
 package com.notzed.rahmaApp.user_service.service;
 
-import com.notzed.rahmaApp.identity_service.dto.SignUpRequestDto;
 import com.notzed.rahmaApp.user_service.auth.UserContextHolder;
-import com.notzed.rahmaApp.user_service.client.IdentityFeignClient;
 import com.notzed.rahmaApp.user_service.dto.ProfileUpdateRequestDto;
 import com.notzed.rahmaApp.user_service.dto.UserDto;
 import com.notzed.rahmaApp.user_service.dto.UserRequestDto;
-import com.notzed.rahmaApp.user_service.entity.Gender;
 import com.notzed.rahmaApp.user_service.entity.User;
 import com.notzed.rahmaApp.user_service.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -15,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 
 @Service
 @Slf4j
@@ -24,7 +20,6 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
-    private final IdentityFeignClient identityClient;
 
     @Transactional
     public UserRequestDto createNewUser(UserRequestDto userRequestDto){
@@ -37,9 +32,7 @@ public class UserService {
 
         userRepository.save(user);
         log.info("Created a new user with ID: {}", user.getUserId());
-        identityClient.signUp(
-                new SignUpRequestDto()
-        )
+
 
         return modelMapper.map(user, UserRequestDto.class);
 

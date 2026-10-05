@@ -16,11 +16,11 @@ import java.util.List;
 
 @Slf4j
 @Component
-public class AuthenticationFilter extends AbstractGatewayFilterFactory<AuthenticationFilter.Config> {
+public class AuthenticationGatewayFilterFactory extends AbstractGatewayFilterFactory<AuthenticationGatewayFilterFactory.Config> {
 
     private final JwtService jwtService;
 
-    public AuthenticationFilter(JwtService jwtService) {
+    public AuthenticationGatewayFilterFactory(JwtService jwtService) {
         super(Config.class);
         this.jwtService = jwtService;
     }
@@ -28,7 +28,6 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
     @Override
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
-
             log.info("Incoming request: {}", exchange.getRequest().getURI());
 
             final String tokenHeader = exchange.getRequest().getHeaders().getFirst("Authorization");
@@ -52,6 +51,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                                 .header("X-User-Id", userId)
                                 .header("X-User-Role", role))
                         .build();
+                log.info("Forwarding X-User-Id: {}", userId);
 
                 return chain.filter(modifiedExchange).contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication));
 

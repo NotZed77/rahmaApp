@@ -4,9 +4,9 @@ import com.notzed.rahmaApp.event_service.auth.UserContextHolder;
 import com.notzed.rahmaApp.event_service.dto.EventDto;
 
 import com.notzed.rahmaApp.event_service.entity.Event;
+import com.notzed.rahmaApp.event_service.exception.UnAuthorisedException;
 import com.notzed.rahmaApp.event_service.repository.EventRepository;
 import jakarta.transaction.Transactional;
-import jakarta.ws.rs.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -47,10 +47,16 @@ public class EventService {
 
         Event event = modelMapper.map(eventDto, Event.class);
 
+        if(userId == null){
+            throw new UnAuthorisedException("User not authenticated");
+        }
+
         event.setActive(false);
         event.setOwnerId(userId);
 
         event = eventRepository.save(event);
+
+
         log.info("Created a new event with ID: {}", eventDto.getEventId());
         return modelMapper.map(event, EventDto.class);
     }

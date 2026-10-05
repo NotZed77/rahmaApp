@@ -18,13 +18,6 @@ public class UserController {
 
     private final UserService userService;
 
-    @PostMapping
-    public ResponseEntity<UserRequestDto> createNewUser(@RequestBody UserRequestDto userRequestDto){
-        log.info("User service controller reached");
-        UserRequestDto userRequestDto1 = userService.createNewUser(userRequestDto);
-        return new ResponseEntity<>(userRequestDto1, HttpStatus.CREATED);
-    }
-
     @GetMapping("/{userId}")
     public ResponseEntity<UserDto> getUserById(@PathVariable Long userId){
         UserDto userDto = userService.getUserById(userId);
@@ -35,6 +28,13 @@ public class UserController {
     public ResponseEntity<Void> updateProfile(@PathVariable Long userId, @RequestBody ProfileUpdateRequestDto profileUpdateRequestDto){
         userService.updateProfile(userId, profileUpdateRequestDto);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/internal")
+    public ResponseEntity<UserRequestDto> createNewUser(@RequestBody UserRequestDto userRequestDto){
+        log.info("User service controller reached");
+        UserRequestDto userRequestDto1 = userService.createNewUser(userRequestDto);
+        return new ResponseEntity<>(userRequestDto1, HttpStatus.CREATED);
     }
 
 

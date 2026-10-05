@@ -17,7 +17,10 @@ import jakarta.ws.rs.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
 import java.util.Arrays;
 
 @Service
@@ -30,9 +33,8 @@ public class AuthService {
     private final JwtService jwtService;
     private final UserFeignClient userClient;
 
-    @Transactional
+
     public SignUpResponseDto signUp(SignUpRequestDto signUpRequestDto){
-        log.info("Signing up");
         boolean exists = identityRepository.existsByEmail(signUpRequestDto.getEmail());
         log.info("Signing up");
 
@@ -71,7 +73,7 @@ public class AuthService {
         boolean isPasswordOfMatch = PasswordUtil.checkPassword(loginDto.getPassword(), identity.getPassword());
 
         if(!isPasswordOfMatch){
-            throw new BadRequestException("Incorrect Password");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid credentials");
         }
 
         return jwtService.generateAccessToken(identity);
@@ -90,6 +92,12 @@ public class AuthService {
                     .orElseThrow(() -> new BadRequestException("Refresh Token not found inside the Cookies"));
 
         return jwtService.generateRefreshToken(identity);
+    }
+
+    public SignUpResponseDto getIdentityId(Long identityId){
+        Identity identity = identityRepository.findById(identityId)
+                .orElseThrow(() -> new RuntimeException("Identity not found with ID: "+ identityId));
+        return modelMapper.map(identity, SignUpResponseDto.class);
     }
 
 }

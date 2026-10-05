@@ -1,6 +1,5 @@
 package com.notzed.rahmaApp.identity_service.controller;
 
-import com.notzed.rahmaApp.identity_service.dto.IdentityDto;
 import com.notzed.rahmaApp.identity_service.dto.LoginDto;
 import com.notzed.rahmaApp.identity_service.dto.SignUpRequestDto;
 import com.notzed.rahmaApp.identity_service.dto.SignUpResponseDto;
@@ -8,7 +7,6 @@ import com.notzed.rahmaApp.identity_service.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -36,5 +34,10 @@ public class AuthController {
     public ResponseEntity<String> refreshToken(String refreshToken, HttpServletRequest request){
         String accessToken = authService.refreshToken(refreshToken, request);
         return ResponseEntity.ok(accessToken);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<SignUpResponseDto> getIdentityId(@PathVariable Long id){
+        return new ResponseEntity<>(authService.getIdentityId(id), HttpStatus.OK);
     }
 }

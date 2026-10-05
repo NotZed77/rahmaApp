@@ -25,7 +25,6 @@ public class Event {
     @Column(nullable = false)
     private Boolean active;
 
-    @Column(nullable = false)
     private Long ownerId;
 
     @Column(nullable = false)

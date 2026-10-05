@@ -12,6 +12,7 @@ public class UserInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception{
         String userId = request.getHeader("X-User-Id");
+        System.out.printf("X-User-Id received: "+ userId);
         if(userId != null){
             UserContextHolder.setCurrentUserId(Long.valueOf(userId));
         }
@@ -23,5 +24,4 @@ public class UserInterceptor implements HandlerInterceptor {
     public void afterCompletion(HttpServletRequest request, HttpServletResponse respose, Object handler, @Nullable Exception ex) throws Exception{
         UserContextHolder.clear();
     }
-
 }
