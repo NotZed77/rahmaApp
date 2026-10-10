@@ -11,6 +11,7 @@ import org.springframework.web.client.RestClient;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.Year;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 @Service
@@ -20,12 +21,11 @@ public class PrayerService {
 
     private final RestClient restClient;
 
-    @Cacheable(cacheNames = "prayer_time")
+    @Cacheable(cacheNames = "prayer_time", key = "T(java.time.LocalDate).now(T(java.time.ZoneId).of('America/Winnipeg'))")
     public AlAdhanResponseDto getPrayerTimeForToday(){
-        LocalDate today = LocalDate.now();
-        String date = today.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
-        log.info("Getting prayers timing for today with Date: {}", date);
-        return getPrayerTime(LocalDate.parse(date));
+        LocalDate today = LocalDate.now(ZoneId.of("America/Winnipeg"));
+        log.info("Getting prayers timing for today with Date: {}", today);
+        return getPrayerTime(today);
     }
 
     @Cacheable(cacheNames = "prayer_time_date", key = "#date")

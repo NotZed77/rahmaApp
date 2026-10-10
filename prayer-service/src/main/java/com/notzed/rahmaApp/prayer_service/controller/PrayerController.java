@@ -38,6 +38,7 @@ public class PrayerController {
 
     @DeleteMapping("/cache")
     public ResponseEntity<Void> clearCache(@RequestParam(required = false) LocalDate date){
+        prayerService.evictPrayerTime();
         if(date != null){
             prayerService.evictPrayerTimeDate();
             prayerService.evictMonthPrayerTime();
