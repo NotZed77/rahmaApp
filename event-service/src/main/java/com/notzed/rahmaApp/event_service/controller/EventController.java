@@ -1,9 +1,12 @@
 package com.notzed.rahmaApp.event_service.controller;
 
 import com.notzed.rahmaApp.event_service.dto.EventDto;
+import com.notzed.rahmaApp.event_service.dto.EventSearchRequest;
 import com.notzed.rahmaApp.event_service.service.EventService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.coyote.Response;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +30,12 @@ public class EventController {
     public ResponseEntity<EventDto> getEventById(@PathVariable Long eventId){
         EventDto eventDto = eventService.getEventById(eventId);
         return new ResponseEntity<>(eventDto, HttpStatus.FOUND);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<Page<EventDto>> searchEvents(@RequestBody EventSearchRequest eventSearchRequest){
+        var page = eventService.searchEvents(eventSearchRequest);
+        return ResponseEntity.ok(page);
     }
 
 }

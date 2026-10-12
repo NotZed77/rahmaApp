@@ -3,6 +3,7 @@ package com.notzed.rahmaApp.event_service.service;
 import com.notzed.rahmaApp.event_service.auth.UserContextHolder;
 import com.notzed.rahmaApp.event_service.dto.EventDto;
 
+import com.notzed.rahmaApp.event_service.dto.EventSearchRequest;
 import com.notzed.rahmaApp.event_service.entity.Event;
 import com.notzed.rahmaApp.event_service.exception.UnAuthorisedException;
 import com.notzed.rahmaApp.event_service.repository.EventRepository;
@@ -10,7 +11,12 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -111,4 +117,12 @@ public class EventService {
     }
 
 
+    public Page<EventDto> searchEvents(EventSearchRequest eventSearchRequest) {
+        log.info("Searching events for {} location, from {} to {}", eventSearchRequest.getEventAt(), eventSearchRequest.getStartTime(), eventSearchRequest.getEndTime());
+        Pageable pageable = PageRequest.of(eventSearchRequest.getPage(), eventSearchRequest.getSize());
+        long dateCount = ChronoUnit.MINUTES.between(eventSearchRequest.getStartTime(), eventSearchRequest.getEndTime()) + 1;
+
+        return eventRepository.findEvents(eventSearchRequest.getEventAt(), eventSearchRequest.getStartTime(),
+                eventSearchRequest.getEndTime(), dateCount, pageable);
+    }
 }

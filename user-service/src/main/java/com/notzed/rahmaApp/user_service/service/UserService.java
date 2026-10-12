@@ -33,9 +33,7 @@ public class UserService {
         userRepository.save(user);
         log.info("Created a new user with ID: {}", user.getUserId());
 
-
         return modelMapper.map(user, UserRequestDto.class);
-
     }
 
     public UserDto getUserById(Long userId){
