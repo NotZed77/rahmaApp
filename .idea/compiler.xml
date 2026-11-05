@@ -9,7 +9,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="discovery-server" />
       </profile>
-      <profile name="Annotation profile for prayer-service" enabled="true">
+      <profile name="Annotation profile for notification-service" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
@@ -18,15 +18,15 @@
         </processorPath>
         <module name="event-service" />
         <module name="api-gateway" />
-        <module name="prayer-service" />
         <module name="user-service" />
+        <module name="prayer-service" />
         <module name="identity-service" />
         <module name="notification-service" />
-        <module name="admin-service" />
         <module name="program-service" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="admin-service" target="21" />
       <module name="rahmaApp" target="21" />
     </bytecodeTargetLevel>
   </component>

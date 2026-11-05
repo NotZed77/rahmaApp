@@ -1,6 +1,7 @@
 package com.notzed.rahmaApp.identity_service.service;
 
 import com.notzed.rahmaApp.identity_service.entity.Identity;
+import com.notzed.rahmaApp.identity_service.exception.BadRequestException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -32,12 +33,13 @@ public class JwtService {
                 .compact();
     }
 
-    public String generateRefreshToken(Identity identity){
+    public String generateRefreshToken(Identity identity) {
         return Jwts.builder()
                 .subject(identity.getId().toString())
-                .subject(identity.getRole().toString())
+                .claim("type", "refresh")
+                .claim("role", identity.getRole().toString())
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + 1000L * 60*60*24*30*6))
+                .expiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 30 * 6))
                 .signWith(getSecretKey())
                 .compact();
     }
@@ -48,6 +50,21 @@ public class JwtService {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+        return Long.valueOf(claims.getSubject());
+    }
+
+    public Long getUserIdFromRefreshToken(String token) {
+
+        Claims claims = Jwts.parser()
+                .verifyWith(getSecretKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        if (!"refresh".equals(claims.get("type", String.class))) {
+            throw new BadRequestException("Invalid refresh token");
+        }
+
         return Long.valueOf(claims.getSubject());
     }
 

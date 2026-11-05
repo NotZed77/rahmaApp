@@ -6,11 +6,11 @@ import com.notzed.rahmaApp.user_service.dto.UserDto;
 import com.notzed.rahmaApp.user_service.dto.UserRequestDto;
 import com.notzed.rahmaApp.user_service.entity.User;
 import com.notzed.rahmaApp.user_service.repository.UserRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 @Service
@@ -43,7 +43,8 @@ public class UserService {
 
         return modelMapper.map(user, UserDto.class);
     }
-    
+
+    @Transactional
     public void updateProfile(Long userId, ProfileUpdateRequestDto profileUpdateRequestDto) {
         User user = userRepository.findById(userId).orElseThrow
                 (() -> new RuntimeException("User with id: " + userId + "not found"));
@@ -51,7 +52,7 @@ public class UserService {
 
         if(profileUpdateRequestDto.getDateOfBirth() != null) user.setDateOfBirth(profileUpdateRequestDto.getDateOfBirth());
         if(profileUpdateRequestDto.getGender() != null) user.setGender(profileUpdateRequestDto.getGender());
-        if(profileUpdateRequestDto.getName() != null) user.setName(profileUpdateRequestDto.getName());
+        if(profileUpdateRequestDto.getUserName() != null) user.setName(profileUpdateRequestDto.getUserName());
 
         log.info("Profile updated");
         userRepository.save(user);

@@ -5,12 +5,15 @@ import io.jsonwebtoken.JwtException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -25,43 +28,60 @@ public class AuthenticationGatewayFilterFactory extends AbstractGatewayFilterFac
         this.jwtService = jwtService;
     }
 
+    public static class Config {
+    }
+
     @Override
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
-            log.info("Incoming request: {}", exchange.getRequest().getURI());
+            String path = exchange.getRequest().getURI().getPath();
 
-            final String tokenHeader = exchange.getRequest().getHeaders().getFirst("Authorization");
-            if(tokenHeader == null || !tokenHeader.startsWith("Bearer ")){
-                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                log.error("Authorization token header not found");
-                return exchange.getResponse().setComplete();
+            if (path.startsWith("/identity/")) return chain.filter(exchange);
+
+            String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+            log.info("Authentication filter called for path: {}", path);
+            log.info("Authorization header present: {}", authHeader != null);
+
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return unauthorized(exchange);
             }
 
-            final String token = tokenHeader.substring(7);
+            String token = authHeader.substring(7).trim();
+
             try {
-                String userId = String.valueOf(jwtService.getUserIdFromToken(token));
+                String userId = jwtService.getUserIdFromToken(token);
                 String role = jwtService.getRoleFromToken(token);
 
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        userId, null, List.of(new SimpleGrantedAuthority("ROLE_" + role))
-                );
+                log.info("JWT validated successfully");
+                log.info("User ID: {}", userId);
+                log.info("User Role: {}", role);
 
-                ServerWebExchange modifiedExchange = exchange.mutate()
-                        .request(r -> r
-                                .header("X-User-Id", userId)
-                                .header("X-User-Role", role))
+                ServerHttpRequest request = exchange.getRequest().mutate()
+                        .headers(headers -> {
+                            headers.remove("X-User-Id");
+                            headers.remove("X-User-Role");
+                            headers.set("X-User-Id", userId);
+                            headers.set("X-User-Role", role);
+                        })
                         .build();
-                log.info("Forwarding X-User-Id: {}", userId);
 
-                return chain.filter(modifiedExchange).contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication));
+                log.info("Before forwarding - User ID: {}", request.getHeaders().getFirst("X-User-Id"));
 
-            } catch (JwtException e){
-                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                return exchange.getResponse().setComplete();
+                log.info("Before forwarding - Role: {}", request.getHeaders().getFirst("X-User-Role"));
+
+                ServerWebExchange modifiedExchange = exchange.mutate().request(request).build();
+
+                return chain.filter(modifiedExchange);
+
+            } catch (Exception ex) {
+                log.error("JWT authentication failed: {}", ex.getMessage(), ex);
+                return unauthorized(exchange);
             }
         };
     }
 
-    public static class Config {
+    private Mono<Void> unauthorized(ServerWebExchange exchange) {
+        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+        return exchange.getResponse().setComplete();
     }
 }

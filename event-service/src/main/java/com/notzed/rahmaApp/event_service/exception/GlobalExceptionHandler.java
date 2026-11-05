@@ -2,6 +2,7 @@ package com.notzed.rahmaApp.event_service.exception;
 
 import com.notzed.rahmaApp.event_service.exception.BadRequestException;
 import com.notzed.rahmaApp.event_service.exception.ResourceNotFoundException;
+import jakarta.ws.rs.ForbiddenException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -26,6 +27,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> handleRuntimeException(RuntimeException exception){
         ApiError apiError = new ApiError(exception.getLocalizedMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         return new ResponseEntity<>(apiError, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ApiError> handleForbiddenException(ForbiddenException exception){
+        ApiError apiError = new ApiError(exception.getLocalizedMessage(), HttpStatus.FORBIDDEN);
+        return new ResponseEntity<>(apiError, HttpStatus.FORBIDDEN);
     }
 
 }

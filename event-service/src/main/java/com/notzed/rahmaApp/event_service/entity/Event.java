@@ -28,6 +28,7 @@ public class Event {
     private Long ownerId;
 
     @Column(nullable = false)
+    @Embedded
     private EventContactInfo contactInfo;
 
 }

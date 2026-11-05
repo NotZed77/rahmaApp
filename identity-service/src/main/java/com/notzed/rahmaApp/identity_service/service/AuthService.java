@@ -1,19 +1,17 @@
 package com.notzed.rahmaApp.identity_service.service;
 
 import com.notzed.rahmaApp.identity_service.client.UserFeignClient;
-import com.notzed.rahmaApp.identity_service.dto.LoginDto;
-import com.notzed.rahmaApp.identity_service.dto.SignUpRequestDto;
-import com.notzed.rahmaApp.identity_service.dto.SignUpResponseDto;
-import com.notzed.rahmaApp.identity_service.dto.UserRequestDto;
+import com.notzed.rahmaApp.identity_service.dto.*;
 import com.notzed.rahmaApp.identity_service.entity.Identity;
 import com.notzed.rahmaApp.identity_service.entity.Role;
+import com.notzed.rahmaApp.identity_service.exception.BadRequestException;
 import com.notzed.rahmaApp.identity_service.exception.ResourceNotFoundException;
+import com.notzed.rahmaApp.identity_service.exception.UserAlreadyExistsException;
 import com.notzed.rahmaApp.identity_service.repository.IdentityRepository;
 import com.notzed.rahmaApp.identity_service.util.PasswordUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
-import jakarta.ws.rs.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -38,8 +36,8 @@ public class AuthService {
         boolean exists = identityRepository.existsByEmail(signUpRequestDto.getEmail());
         log.info("Signing up");
 
-        if(exists){
-            throw new RuntimeException("User is already present with same email ID");
+        if (identityRepository.existsByEmail(signUpRequestDto.getEmail())) {
+            throw new UserAlreadyExistsException("User is already present with same email ID");
         }
 
         Identity newIdentity = modelMapper.map(signUpRequestDto, Identity.class);
@@ -65,34 +63,51 @@ public class AuthService {
     }
 
     @Transactional
-    public String login(LoginDto loginDto){
+    public LoginResponseDto login(LoginDto loginDto) {
+
         Identity identity = identityRepository.findByEmail(loginDto.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: "+ loginDto.getEmail()));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        log.info("Logging in");
-        boolean isPasswordOfMatch = PasswordUtil.checkPassword(loginDto.getPassword(), identity.getPassword());
+        boolean passwordMatches = PasswordUtil.checkPassword(
+                loginDto.getPassword(), identity.getPassword());
 
-        if(!isPasswordOfMatch){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid credentials");
+        if (!passwordMatches) {
+            throw new BadRequestException("Invalid credentials");
         }
+
+        log.info("Login email: {}", identity.getEmail());
+        log.info("Login identity ID: {}", identity.getId());
+
+        String accessToken = jwtService.generateAccessToken(identity);
+        String refreshToken = jwtService.generateRefreshToken(identity);
+
+        return new LoginResponseDto(accessToken, refreshToken);
+    }
+
+
+    public String refreshToken(HttpServletRequest request) {
+
+        Cookie[] cookies = request.getCookies();
+
+        if (cookies == null) {
+            throw new BadRequestException("No cookies found in request");
+        }
+
+        String refreshToken = Arrays.stream(cookies)
+                .filter(cookie -> "refreshToken".equals(cookie.getName()))
+                .map(Cookie::getValue)
+                .filter(token -> token != null && !token.isBlank())
+                .findFirst()
+                .orElseThrow(() -> new BadRequestException("Refresh Token not found inside the Cookies"));
+
+        Long id = jwtService.getUserIdFromToken(refreshToken);
+
+        Identity identity = identityRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + id));
 
         return jwtService.generateAccessToken(identity);
     }
 
-    public String refreshToken(String refreshToken, HttpServletRequest request){
-        Long id = jwtService.getUserIdFromToken(refreshToken);
-
-        Identity identity = identityRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: "+id));
-
-        refreshToken = Arrays.stream(request.getCookies())
-                    .filter(cookie -> "refreshToken".equals(cookie.getName()))
-                    .findFirst()
-                    .map(Cookie::getValue)
-                    .orElseThrow(() -> new BadRequestException("Refresh Token not found inside the Cookies"));
-
-        return jwtService.generateRefreshToken(identity);
-    }
 
     public SignUpResponseDto getIdentityId(Long identityId){
         Identity identity = identityRepository.findById(identityId)

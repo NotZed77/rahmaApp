@@ -5,9 +5,12 @@ import com.notzed.rahmaApp.event_service.dto.EventDto;
 
 import com.notzed.rahmaApp.event_service.dto.EventSearchRequest;
 import com.notzed.rahmaApp.event_service.entity.Event;
+import com.notzed.rahmaApp.event_service.exception.BadRequestException;
+import com.notzed.rahmaApp.event_service.exception.ResourceNotFoundException;
 import com.notzed.rahmaApp.event_service.exception.UnAuthorisedException;
 import com.notzed.rahmaApp.event_service.repository.EventRepository;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.ForbiddenException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -33,7 +36,7 @@ public class EventService {
     public EventDto getEventById(Long eventId){
         log.info("Getting the event with ID: {}", eventId);
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new RuntimeException("Event not found with ID: {}"+ eventId));
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found with ID: {}"+ eventId));
 
         return modelMapper.map(event, EventDto.class);
     }
@@ -69,20 +72,31 @@ public class EventService {
 
     @Transactional
     public EventDto updateEventById(Long eventId, EventDto eventDto) {
+
         log.info("Updating the event with ID: {}", eventId);
+
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new RuntimeException("Event not found with ID: {}"+ eventId));
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found with ID: " + eventId));
 
         Long userId = UserContextHolder.getCurrentUserId();
 
-        if(!userId.equals(event.getOwnerId())){
-            throw new RuntimeException("This user does not own this event with ID: " + eventId);
-        }
+        if (userId == null) throw new UnAuthorisedException("User not authenticated");
 
-        modelMapper.map(eventDto, event);
-        event.setEventId(eventId);
-        event = eventRepository.save(event);
-        return modelMapper.map(event, EventDto.class);
+
+        if (!userId.equals(event.getOwnerId()))
+            throw new ForbiddenException("This user does not own this event with ID: " + eventId);
+
+
+        event.setEventName(eventDto.getEventName());
+        event.setEventTime(eventDto.getEventTime());
+        event.setActive(eventDto.getActive());
+        event.setContactInfo(eventDto.getContactInfo());
+
+        Event updatedEvent = eventRepository.save(event);
+
+        log.info("Successfully updated event with ID: {}", updatedEvent.getEventId());
+
+        return modelMapper.map(updatedEvent, EventDto.class);
     }
 
     @Transactional
@@ -90,10 +104,10 @@ public class EventService {
         Long user = UserContextHolder.getCurrentUserId();
         log.info("Deleting the event with ID: {}", eventId);
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new RuntimeException("Event not found with ID: {}"+ eventId));
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found with ID: {}"+ eventId));
 
         if(!user.equals(event.getOwnerId())){
-            throw new RuntimeException("This user does not own this event with ID: " + eventId);
+            throw new ForbiddenException("This user does not own this event with ID: " + eventId);
         }
 
         eventRepository.deleteById(eventId);
@@ -105,13 +119,13 @@ public class EventService {
         Long user = UserContextHolder.getCurrentUserId();
         log.info("Activating the event with ID: {}", eventId);
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new RuntimeException("Event not found with ID: {}"+ eventId));
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found with ID: {}"+ eventId));
         if(event.getActive().equals(true)){
-            throw new RuntimeException("Event is already active");
+            throw new BadRequestException("Event is already active");
         }
 
         if(!user.equals(event.getOwnerId())){
-            throw new RuntimeException("This user does not own this event with ID: " + eventId);
+            throw new ForbiddenException("This user does not own this event with ID: " + eventId);
         }
         event.setActive(true);
     }
@@ -122,7 +136,6 @@ public class EventService {
         Pageable pageable = PageRequest.of(eventSearchRequest.getPage(), eventSearchRequest.getSize());
         long dateCount = ChronoUnit.MINUTES.between(eventSearchRequest.getStartTime(), eventSearchRequest.getEndTime()) + 1;
 
-        return eventRepository.findEvents(eventSearchRequest.getEventAt(), eventSearchRequest.getStartTime(),
-                eventSearchRequest.getEndTime(), dateCount, pageable);
+        return eventRepository.findEvents( eventSearchRequest.getStartTime(), eventSearchRequest.getEndTime(), pageable);
     }
 }
